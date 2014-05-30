@@ -16,7 +16,6 @@ public class TranslationServiceTest extends CamelSpringTestSupport {
         getMockEndpoint("mock:results").expectedMessageCount(1);
 
         Map<String, Object> headers = new HashMap<String, Object>();
-        headers.put("CamelLDpathProgramUri", "https://raw.githubusercontent.com/cbeer/dor_to_fcrepo4/master/solr/ldpath_spotlight_indexing");
         headers.put("LDpathContextUri", "http://127.0.0.1:8080/rest/qb/438/pg/7646/qb438pg7646");
         template.sendBodyAndHeaders("direct:start", "", headers);
 

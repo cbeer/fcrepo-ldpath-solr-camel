@@ -32,10 +32,75 @@
     </dataFormats>
     <route id="testRoute">
       <from uri="direct:start" />
+      <to uri="direct:doTheReindex" />
+      <to uri="mock:results"/>
+    </route>
+
+    <route id="dothereindex">
+      <from uri="direct:doTheReindex" />
+
+      <to uri="direct:enrichExchangeWithIndexingSteps" />
+
+      <split>
+        <header>solrIndexers</header>
+        <setHeader headerName="CamelSplitIndex">
+          <simple>${header.CamelSplitIndex}</simple>
+        </setHeader>
+        <to uri="direct:runIndexingStep"/>
+      </split>
+    </route>
+
+    <route id="enrichExchangeWithIndexingSteps">
+      <from uri="direct:enrichExchangeWithIndexingSteps" />
+      <to uri="direct:savebody" />
+
+
+      <setHeader headerName="CamelLDpathProgramUri">
+        <constant>https://gist.githubusercontent.com/cbeer/d99b93523c78a9d2da0c/raw/f61d3a0148c99f5425515c1e35d1a793b2afb6f0/gistfile1.txt</constant>
+      </setHeader>
+
+      <to uri="translationService" />
+
+      <marshal ref="jack"/>
+
+      <setHeader headerName="solrIndexers">
+        <jsonpath>$.indexers[*]</jsonpath>
+      </setHeader>
+
+      <to uri="direct:restorebody" />
+    </route>
+
+    <route id="processIndexingInstructionsAndInsert">
+      <from uri="direct:runIndexingStep" />
+
+      <setHeader headerName="CamelLDpathProgramUri">
+        <javaScript>request.headers.get('solrIndexers').get(request.headers.get('CamelSplitIndex')).split("\\|")[1]</javaScript>
+      </setHeader>
+
       <to uri="translationService" />
       <marshal ref="jack"/>
-      <to uri="log:xyz?showAll=true" />
-      <to uri="mock:results"/>
+
+
+      <setHeader headerName="CamelHttpUri">
+        <javaScript>request.headers.get('solrIndexers').get(request.headers.get('CamelSplitIndex')).split("\\|")[0] + "/update"</javaScript>
+      </setHeader>
+      <to uri="http4://127.0.0.1:8080/solr/update/" />
+    </route>
+
+    <route id="utilSaveBody">
+      <from uri="direct:savebody" />
+
+      <setHeader headerName="oldBody">
+        <simple>${body}</simple>
+      </setHeader>
+    </route>
+
+    <route id="utilRestoreBody">
+      <from uri="direct:restorebody" />
+
+      <setBody>
+        <simple>${header.oldBody}</simple>
+      </setBody>
     </route>
   </camelContext>
   <bean id="translationService" class="info.cbeer.fcrepo.ldpath.solr.camel.TranslationService" />
