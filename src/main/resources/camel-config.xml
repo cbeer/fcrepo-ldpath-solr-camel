@@ -1,129 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
--->
 
 <!-- START SNIPPET: e1 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:camel="http://camel.apache.org/schema/spring"
        xsi:schemaLocation="
          http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
          http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
+  <import resource="camel-activemq-config.xml" />
+  <import resource="camel-solr-config.xml" />
   <camelContext xmlns="http://camel.apache.org/schema/spring">
+    <propertyPlaceholder id="properties" location="camel.properties"/>
+
+    <routeContextRef ref="activemq-listener" />
+    <routeContextRef ref="solr-indexing" />
 
     <dataFormats>
       <!-- here we define a Json data format with the id jack and that it should use the TestPojo as the class type when
            doing unmarshal. The unmarshalTypeName is optional, if not provided Camel will use a Map as the type -->
       <json id="jack" library="Jackson" />
     </dataFormats>
-    
-    <route id="fcrepoMessageRoute">
-      <from uri="activemq:topic:fedora" />
-      <aggregate strategyRef="aggregatorStrategy" completionSize="100" completionTimeout="500">
-        <correlationExpression>
-          <simple>header[http://fedora.info/definitions/v4/repository#identifier]</simple>
-        </correlationExpression>
-        <to uri="activemq:topic:fedora-changes" />
-      </aggregate>
-    </route>
-    
-    <route id="fcrepoChangesRoute">
-      <from uri="activemq:topic:fedora-changes" />
-      <multicast>
-        <to uri="activemq:queue:reindex" />
-      </multicast>
-    </route>
-
-    <route id="activeMqReindex">
-      <from uri="activemq:queue:reindex" />
-      <to uri="direct:doTheReindex" />
-    </route>
-
-    <route id="dothereindex">
-      <from uri="direct:doTheReindex" />
-
-      <to uri="direct:enrichExchangeWithIndexingSteps" />
-
-      <split>
-        <header>solrIndexers</header>
-        <setHeader headerName="CamelSplitIndex">
-          <simple>${header.CamelSplitIndex}</simple>
-        </setHeader>
-        <to uri="direct:runIndexingStep"/>
-      </split>
-    </route>
-
-    <route id="enrichExchangeWithIndexingSteps">
-      <from uri="direct:enrichExchangeWithIndexingSteps" />
-      <to uri="direct:savebody" />
-
-
-      <setHeader headerName="CamelLDpathProgramUri">
-        <constant>https://gist.githubusercontent.com/cbeer/d99b93523c78a9d2da0c/raw/f61d3a0148c99f5425515c1e35d1a793b2afb6f0/gistfile1.txt</constant>
-      </setHeader>
-
-      <to uri="translationService" />
-
-      <marshal ref="jack"/>
-
-      <setHeader headerName="solrIndexers">
-        <jsonpath>$.indexers[*]</jsonpath>
-      </setHeader>
-
-      <to uri="direct:restorebody" />
-    </route>
-
-    <route id="processIndexingInstructionsAndInsert">
-      <from uri="direct:runIndexingStep" />
-
-      <setHeader headerName="CamelLDpathProgramUri">
-        <javaScript>request.headers.get('solrIndexers').get(request.headers.get('CamelSplitIndex')).split("\\|")[1]</javaScript>
-      </setHeader>
-
-      <to uri="translationService" />
-      <marshal ref="jack"/>
-
-
-      <setHeader headerName="CamelHttpUri">
-        <javaScript>request.headers.get('solrIndexers').get(request.headers.get('CamelSplitIndex')).split("\\|")[0] + "/update"</javaScript>
-      </setHeader>
-      <to uri="http4://127.0.0.1:8080/solr/update/" />
-    </route>
-
-    <route id="utilSaveBody">
-      <from uri="direct:savebody" />
-
-      <setHeader headerName="oldBody">
-        <simple>${body}</simple>
-      </setHeader>
-    </route>
-
-    <route id="utilRestoreBody">
-      <from uri="direct:restorebody" />
-
-      <setBody>
-        <simple>${header.oldBody}</simple>
-      </setBody>
-    </route>
 
   </camelContext>
 
-  <bean id="aggregatorStrategy" class="org.apache.camel.processor.aggregate.UseLatestAggregationStrategy"/>
-  <bean id="translationService" class="info.cbeer.fcrepo.ldpath.solr.camel.TranslationService" />
 </beans>
   <!-- END SNIPPET: e1 -->

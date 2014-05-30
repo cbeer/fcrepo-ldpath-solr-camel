@@ -24,6 +24,6 @@ public class TranslationServiceTest extends CamelSpringTestSupport {
 
     @Override
     protected AbstractApplicationContext createApplicationContext() {
-        return new ClassPathXmlApplicationContext("spring-test/camel-config.xml");
+        return new ClassPathXmlApplicationContext("spring-test/test-config.xml");
     }
 }

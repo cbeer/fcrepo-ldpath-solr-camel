@@ -1,0 +1,34 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+  <routeContext id="activemq-listener" xmlns="http://camel.apache.org/schema/spring">
+
+    <route id="fcrepoMessageRoute">
+      <from uri="activemq:topic:fedora" />
+      <aggregate strategyRef="aggregatorStrategy" completionSize="100" completionTimeout="500">
+        <correlationExpression>
+          <simple>header[http://fedora.info/definitions/v4/repository#identifier]</simple>
+        </correlationExpression>
+        <to uri="activemq:topic:fedora-changes" />
+      </aggregate>
+    </route>
+
+    <route id="fcrepoChangesRoute">
+      <from uri="activemq:topic:fedora-changes" />
+      <multicast>
+        <to uri="activemq:queue:reindex" />
+      </multicast>
+    </route>
+
+    <route id="activeMqReindex">
+      <from uri="activemq:queue:reindex" />
+      <to uri="direct:doTheReindex" />
+    </route>
+  </routeContext>
+
+  <bean id="aggregatorStrategy" class="org.apache.camel.processor.aggregate.UseLatestAggregationStrategy"/>
+</beans>
