@@ -14,7 +14,7 @@
 
       <to uri="direct:enrichExchangeWithIndexingSteps" />
 
-      <split>
+      <split parallelProcessing="true">
         <header>solrIndexers</header>
         <setHeader headerName="CamelSplitIndex">
           <simple>${header.CamelSplitIndex}</simple>

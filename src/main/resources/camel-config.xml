@@ -9,11 +9,13 @@
 
   <import resource="camel-activemq-config.xml" />
   <import resource="camel-solr-config.xml" />
+  <import resource="camel-rest-config.xml" />
   <camelContext xmlns="http://camel.apache.org/schema/spring">
     <propertyPlaceholder id="properties" location="camel.properties"/>
 
     <routeContextRef ref="activemq-listener" />
     <routeContextRef ref="solr-indexing" />
+    <routeContextRef ref="rest-indexing" />
 
     <dataFormats>
       <!-- here we define a Json data format with the id jack and that it should use the TestPojo as the class type when

@@ -1,0 +1,38 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+  <routeContext id="rest-indexing" xmlns="http://camel.apache.org/schema/spring">
+
+    <route id="RestReindex">
+      <!-- incoming requests from the servlet is routed -->
+      <from uri="servlet:///reindex"/>
+      <choice>
+        <when>
+          <header>uri</header>
+          <setHeader headerName="LDpathContextUri">
+            <simple>${header.uri}</simple>
+          </setHeader>
+          <to uri="direct:doTheReindex" />
+        </when>
+        <otherwise>
+          <transform>
+            <constant><![CDATA[
+            <html><body>
+              Add a uri parameter, e.g. ?uri=http://xyz
+              <form method="POST">
+                <input name="uri" />
+              </form>
+              </body></html>
+              ]]>
+            </constant>
+          </transform>
+        </otherwise>
+      </choice>
+    </route>
+  </routeContext>
+
+</beans>
