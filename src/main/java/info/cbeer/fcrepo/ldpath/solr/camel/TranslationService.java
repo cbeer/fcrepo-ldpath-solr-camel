@@ -1,5 +1,6 @@
 package info.cbeer.fcrepo.ldpath.solr.camel;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.camel.Header;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -21,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class TranslationService {
@@ -54,13 +56,13 @@ public class TranslationService {
                                                 .build();
     }
 
-    public Map<String, Collection<?>> executeLDPathProgram(String body,
+    public List<Map<String, Collection<?>>> executeLDPathProgram(String body,
                                                   @Header("CamelLDpathProgramUri") String templateUri,
                                                   @Header("LDpathContextUri") String context) throws LDPathParseException, IOException {
 
         final URI uri = backend.createURI(context);
         ldcache.expire(uri);
-        return ldpath.programQuery(uri, getTemplateReader(templateUri));
+        return ImmutableList.of(ldpath.programQuery(uri, getTemplateReader(templateUri)));
     }
 
     private BufferedReader getTemplateReader(String templateUri) throws IOException {
