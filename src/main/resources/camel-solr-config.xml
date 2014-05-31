@@ -61,6 +61,9 @@
       <setHeader headerName="CamelHttpUri">
         <javaScript>request.headers.get('SolrBaseUri') + "/update"</javaScript>
       </setHeader>
+      <setHeader headerName="Content-Type">
+        <constant>application/json</constant>
+      </setHeader>
       <to uri="http4://127.0.0.1:8080/solr/update/" />
     </route>
 
