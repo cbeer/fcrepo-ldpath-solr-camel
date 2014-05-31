@@ -86,5 +86,17 @@
   </routeContext>
 
   <bean id="translationService" class="info.cbeer.fcrepo.ldpath.solr.camel.TranslationService" />
+  <bean id="jack" class="org.apache.camel.component.jackson.JacksonDataFormat">
+    <constructor-arg name="mapper">
+      <bean class="org.codehaus.jackson.map.ObjectMapper">
+        <property name="dateFormat">
+          <value type="java.text.SimpleDateFormat">yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</value>
+        </property>
+      </bean>
+    </constructor-arg>
+    <constructor-arg name="unmarshalType">
+      <value type="java.lang.Class">java.util.HashMap</value>
+    </constructor-arg>
+  </bean>
 </beans>
         <!-- END SNIPPET: e1 -->

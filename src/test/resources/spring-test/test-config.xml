@@ -30,11 +30,6 @@
     <propertyPlaceholder id="properties" location="classpath:camel.properties"/>
 
     <routeContextRef ref="solr-indexing" />
-    <dataFormats>
-      <!-- here we define a Json data format with the id jack and that it should use the TestPojo as the class type when
-           doing unmarshal. The unmarshalTypeName is optional, if not provided Camel will use a Map as the type -->
-      <json id="jack" library="Jackson" />
-    </dataFormats>
 
 
     <route id="testRoute">
