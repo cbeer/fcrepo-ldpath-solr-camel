@@ -26,6 +26,9 @@
 
     <route id="activeMqReindex">
       <from uri="activemq:queue:reindex" />
+      <setHeader headerName="LDpathContextUri">
+        <simple>${header[http://fedora.info/definitions/v4/repository#baseURL]}${header[http://fedora.info/definitions/v4/repository#identifier]}</simple>
+      </setHeader>
       <to uri="direct:doTheReindex" />
     </route>
   </routeContext>
